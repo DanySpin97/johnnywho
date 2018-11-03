@@ -1,0 +1,70 @@
+# Copyright 2018 John Kallimanis
+# Distributed under the terms of the GNU General Public License v2
+# Initially based on samsung-unified-driver-1.00.39.ebuild from Gentoo, which is
+# Copyright 1999-2013 Gentoo Foundation
+
+require udev-rules
+
+SUMMARY="Samsung Unified Linux Driver for printers and MFDs"
+DESCRIPTION="
+This driver is requiered for advanced print settings on these printers
+and for scanning
+"
+HOMEPAGE="http://www.samsung.com"
+DOWNLOADS="http://downloadcenter.samsung.com/content/DR/201411/20141127091828551/ULD_v${PV}.tar.gz -> ${PNV}.tar.gz"
+
+LICENCES="Samsung-EULA"
+SLOT="0"
+PLATFORMS="~amd64"
+MYOPTIONS="scanner"
+
+DEPENDENCIES="
+    run:
+        net-print/cups
+        scanner? (
+                 media-gfx/sane-backends
+                 dev-libs/libxml2
+                 dev-libs/libusb
+        )
+"
+
+BUGS_TO="johnkall007@gmail.com"
+
+WORK="${WORKBASE}"/uld
+
+src_install() {
+    local MY_ARCH="x86_64"
+
+    #Install the libraries for printing
+    dolib.so "${MY_ARCH}"/libscmssc.so
+
+    #Install cups filters
+    exeinto /usr/"$(exhost --target)"/libexec/cups/filter
+    doexe "${MY_ARCH}"/{pstosecps,rastertospl}
+
+    dodir /usr/share/cups/model/samsung
+	insinto /usr/share/cups/model/samsung
+	doins noarch/share/ppd/*.ppd
+
+    dodir /usr/share/cups/profiles/samsung
+	insinto /usr/share/cups/profiles/samsung
+	doins noarch/share/ppd/cms/*.cts
+
+    if option scanner; then
+        insinto /etc/sane.d
+		doins noarch/etc/smfp.conf
+		doins noarch/oem.conf
+
+		exeinto /usr/"$(exhost --target)"/lib/sane
+		doexe "${MY_ARCH}"/libsane-smfp.so.1.0.1
+
+		dosym libsane-smfp.so.1.0.1 /usr/"$(exhost --target)"/lib/sane/libsane-smfp.so
+		dosym libsane-smfp.so.1.0.1 /usr/"$(exhost --target)"/lib/sane/libsane-smfp.so.1
+
+        #Install udev rules required for correct scanner permissions
+        install_udev_files
+
+		echo smfp > "${IMAGE}"/etc/sane.d/samsung.conf
+	fi
+}
+
