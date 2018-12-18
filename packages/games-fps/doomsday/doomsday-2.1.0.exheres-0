@@ -1,0 +1,61 @@
+# Copyright 2012 A Frederick Christensen <fauxmight@nosocomia.com>
+# Copyright 2014 John Kallimanis <johnkall007@gmail.com>
+# Copyright 2018 Danilo Spinella <danyspin97@protonmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+require cmake [ api=2 ]
+
+SUMMARY="Modern DOOM Sourceport"
+DESCRIPTION="
+The Doomsday Engine allows you to play the classic first-person shooters DOOM, Heretic,
+and Hexen using modern technology, with hardware accelerated 3D graphics, surround
+sound and much more.
+"
+HOMEPAGE="http://dengine.net/"
+DOWNLOADS="http://api.dengine.net/1/builds?dl=${PNV}.tar.gz"
+
+LICENCES="GPL-3 LGPL-3"
+SLOT="0"
+PLATFORMS="~amd64"
+MYOPTIONS=""
+
+DEPENDENCIES="
+    build+run:
+        media-libs/openal
+        media-libs/SDL:2
+        media-libs/SDL_mixer:2
+        media-sound/fluidsynth
+        sys-libs/ncurses
+        x11-libs/libICE
+        x11-libs/libSM
+        x11-libs/libX11
+        x11-libs/libXext
+        x11-libs/libXrandr
+        x11-libs/libXxf86vm
+        x11-libs/qtbase:5
+        x11-libs/qtx11extras:5
+"
+
+BUGS_TO="johnkall007@gmail.com"
+
+CMAKE_SOURCE="${WORKBASE}/${PNV}/${PN}"
+
+CMAKE_SRC_CONFIGURE_PARAMS=(
+    -DDENG_DISTRIB_DIR=/usr/$(exhost --target)
+    -DDENG_PREFIX_SET=ON
+    -DDENG_ENABLE_GUI=ON
+    -DDENG_ENABLE_TOOLS=ON
+    -DDENG_FLUIDSYNTH_EMBEDDED=OFF
+    -DDENG_FMOD=OFF
+)
+
+src_prepare() {
+    edo sed -i 's;share/doomsday;/usr/share/doomsday;' ${CMAKE_SOURCE}/cmake/Config.cmake
+    edo sed -i 's;share/doc;/usr/share/doc;' ${CMAKE_SOURCE}/cmake/Config.cmake
+    edo sed -i 's;share/man/man6;/usr/share/man/man6;' ${CMAKE_SOURCE}/cmake/Config.cmake
+    edo sed -i 's;share/applications;/usr/share/applications;' ${CMAKE_SOURCE}/apps/client/CMakeLists.txt
+    edo sed -i 's;share/applications;/usr/share/applications;' ${CMAKE_SOURCE}/tools/shell/CMakeLists.txt
+
+    cmake_src_prepare
+}
+
